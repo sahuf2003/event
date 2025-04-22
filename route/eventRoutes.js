@@ -5,19 +5,28 @@ const authValidator = require('../middleware/authValidator');
 const router = express.Router();
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const fileFilter = (req, file, cb) => {
-    console.log('File MIME type:', file.mimetype); 
-    console.log('File size:', file.size);
-  if (['image/jpeg', 'image/png'].includes(file.mimetype) && file.size <= 2 * 1024 * 1024) {
-    cb(null, true);
-  } else {
-    cb(new Error('Invalid file type or size'));
-  }
-};
-const upload = multer({ storage, fileFilter });
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+  });
+  
+  const fileFilter = (req, file, cb) => {
+    console.log('File MIME type:', file.mimetype);
+    if (['image/jpeg', 'image/png'].includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG and PNG are allowed'));
+    }
+  };
+  
+  const upload = multer({ 
+    storage, 
+    fileFilter,
+    limits: {
+      fileSize: 2 * 1024 * 1024 // 2MB limit
+    }
+  });
+  
+  
 
 router.post('/', authValidator, createEvent);
 router.get('/', getEvents);
