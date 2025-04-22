@@ -263,7 +263,6 @@ Events in the system follow a lifecycle:
 1. **Upcoming**: After creation until the start time
 2. **Ongoing**: Between start time and end time
 3. **Completed**: After end time
-4. **Cancelled**: Manually set by event creator
 
 The system automatically updates these statuses via a cron job that runs every 10 minutes.
 
