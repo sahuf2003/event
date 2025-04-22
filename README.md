@@ -1,159 +1,341 @@
 # Event Management API
 
-A backend API to manage events, including user registration, authentication, event creation, updates, and status management.
+A robust backend API for managing events, including user authentication, event creation, updates, status management, and file uploads.
+
+## Overview
+
+This Event Management API allows users to register, create events, update event details, upload event banners, and manage participants. The system includes automated event status updates and reminder notifications.
+
+🔗 Live Demo: [https://event-970g.onrender.com](https://event-970g.onrender.com)
 
 ## Features
 
-- **User Registration & Login**: Secure authentication with JWT tokens.
-- **Event Management**: Create, read, update, and delete events.
-- **Event Status**: Automatically update event statuses (upcoming, ongoing, completed).
-- **Event Reminders**: Notifications for events starting soon.
-- **File Uploads**: Upload event banners (JPEG/PNG) with size validation.
+- **User Authentication**
+  - Secure registration and login with JWT token-based authentication
+  - Protected routes for authorized actions
 
-## Setup
+- **Event Management**
+  - Create, read, update, and delete events
+  - Automatic event status tracking (upcoming → ongoing → completed)
+  - Event reminders and notifications
+  - User authorization checks (only creators can edit their events)
 
-1. **Clone the repository**:
-    ```bash
-    git clone https://github.com/sahuf2003/event.git
-    cd event
-    ```
+- **File Management**
+  - Upload event banner images (JPEG/PNG)
+  - 2MB file size limit with type validation
+  - Static file serving
 
-2. **Install dependencies**:
-    ```bash
-    npm install
-    ```
+- **Automated Background Tasks**
+  - Event reminder notifications (5 minutes before start)
+  - Automatic status updates based on event times
+  - Periodic system maintenance
 
-3. **Create a `.env` file** in the root directory with the following environment variables:
-    ```
-    MONGO_URI=your_mongodb_connection_string
-    JWT_SECRET=your_jwt_secret
-    PORT=5000
-    ```
+## Technology Stack
 
-4. **Start the server**:
-    ```bash
-    npm run dev
-    ```
+- **Backend**: Node.js, Express.js
+- **Database**: MongoDB with Mongoose ODM
+- **Authentication**: JWT (JSON Web Tokens)
+- **File Handling**: Multer
+- **Scheduling**: Node-cron
+- **Security**: bcryptjs for password hashing
 
-The server will be running on `http://localhost:5000`.
+## Project Structure
 
-## Testing with cURL & Postman
+```
+event-management-api/
+├── config/
+│   └── db.js               # Database connection
+├── controllers/
+│   ├── authControllers.js  # User authentication logic
+│   └── eventControllers.js # Event management logic
+├── middleware/
+│   ├── authValidator.js    # JWT validation
+│   ├── errorHandler.js     # Global error handling
+│   └── logger.js           # Request logging
+├── model/
+│   ├── Event.js            # Event schema and model
+│   └── User.js             # User schema and model
+├── route/
+│   ├── authRoutes.js       # Authentication routes
+│   └── eventRoutes.js      # Event management routes
+├── uploads/                # Banner image storage
+├── utils/
+│   └── cronJobs.js         # Scheduled tasks
+├── .env                    # Environment variables
+├── .gitignore              # Git ignore file
+├── package.json            # Dependencies and scripts
+└── server.js               # Application entry point
+```
 
-### 1. **Register User**
-- **POST** `/auth/register`
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14 or higher)
+- MongoDB instance (local or Atlas)
+- npm or yarn package manager
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/yourusername/event-management-api.git
+cd event-management-api
+```
+
+2. **Install dependencies**
+```bash
+npm install
+```
+
+3. **Create `.env` file**
+```
+MONGO_URI=mongodb+srv://your_mongodb_connection_string
+JWT_SECRET=your_secret_key_for_jwt
+PORT=5000
+```
+
+4. **Create uploads directory**
+```bash
+mkdir uploads
+```
+
+5. **Start the server**
+```bash
+# Development mode
+npm run dev
+
+# Production mode
+npm start
+```
+
+The server will start at `http://localhost:5000` (or the PORT you specified).
+
+## API Documentation
+
+### Authentication
+
+#### Register User
+- **URL**: `/auth/register`
+- **Method**: `POST`
 - **Body**:
-    ```json
-    {
-      "name": "John Doe",
-      "email": "john@example.com",
-      "password": "password123"
-    }
-    ```
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "pass": "securepassword123"
+}
+```
+- **Success Response**: `200 OK`
+```json
+{
+  "message": "Registration successful"
+}
+```
 
-- **cURL**:
-    ```bash
-    curl -X POST http://localhost:5000/auth/register -H "Content-Type: application/json" -d '{"name":"John Doe", "email":"john@example.com", "passwoed":"password123"}'
-    ```
-
-### 2. **Login User**
-- **POST** `/auth/login`
+#### Login
+- **URL**: `/auth/login`
+- **Method**: `POST`
 - **Body**:
-    ```json
-    {
-      "email": "john@example.com",
-      "password": "password123"
-    }
-    ```
+```json
+{
+  "email": "john@example.com",
+  "pass": "securepassword123"
+}
+```
+- **Success Response**: `200 OK`
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
-- **cURL**:
-    ```bash
-    curl -X POST http://localhost:5000/auth/login -H "Content-Type: application/json" -d '{"email":"john@example.com", "passwoed":"password123"}'
-    ```
+### Events
 
-- **Response**:
-    ```json
-    {
-      "token": "your_jwt_token_here"
-    }
-    ```
-
-### 3. **Create Event**
-- **POST** `/events`
-- **Headers**:
-    - `Authorization: Bearer <JWT_TOKEN>`
+#### Create Event
+- **URL**: `/events`
+- **Method**: `POST`
+- **Auth**: Required (Bearer Token)
 - **Body**:
-    ```json
-    {
-      "title": "Sample Event",
-      "description": "Description of the event",
-      "location": "Venue",
-      "startTime": "2025-04-23T12:00:00Z",
-      "endTime": "2025-04-23T14:00:00Z",
-      "maxParticipants": 100,
-    }
-    ```
+```json
+{
+  "title": "Tech Conference 2025",
+  "description": "Annual technology conference",
+  "location": "Convention Center",
+  "startTime": "2025-05-15T09:00:00Z",
+  "endTime": "2025-05-15T17:00:00Z",
+  "maxParticipants": 200,
+  "isPublished": true
+}
+```
+- **Success Response**: `201 Created`
 
-- **cURL**:
-    ```bash
-    curl -X POST http://localhost:5000/events -H "Content-Type: application/json" -H "Authorization: Bearer <JWT_TOKEN>" -d '{"title":"Sample Event", "description":"Description of the event", "location":"Venue", "startTime":"2025-04-23T12:00:00Z", "endTime":"2025-04-23T14:00:00Z", "maxParticipants":100, "isPublished":true}'
-    ```
+#### Get All Events
+- **URL**: `/events`
+- **Method**: `GET`
+- **Auth**: Not required
+- **Success Response**: `200 OK`
+```json
+[
+  {
+    "_id": "60d21b4667d0d8992e610c85",
+    "title": "Tech Conference 2025",
+    "description": "Annual technology conference",
+    "location": "Convention Center",
+    "startTime": "2025-05-15T09:00:00Z",
+    "endTime": "2025-05-15T17:00:00Z",
+    "createdBy": "60d21b1c67d0d8992e610c84",
+    "status": "upcoming",
+    "maxParticipants": 200,
+    "isPublished": true,
+    "participants": [],
+    "createdAt": "2025-04-20T12:00:00Z",
+    "updatedAt": "2025-04-20T12:00:00Z"
+  }
+]
+```
 
-### 4. **Get Events**
-- **GET** `/events`
+#### Get Event by ID
+- **URL**: `/events/:id`
+- **Method**: `GET`
+- **Auth**: Not required
+- **Success Response**: `200 OK`
+```json
+{
+  "_id": "60d21b4667d0d8992e610c85",
+  "title": "Tech Conference 2025",
+  "description": "Annual technology conference",
+  "location": "Convention Center",
+  "startTime": "2025-05-15T09:00:00Z",
+  "endTime": "2025-05-15T17:00:00Z",
+  "createdBy": "60d21b1c67d0d8992e610c84",
+  "status": "upcoming",
+  "maxParticipants": 200,
+  "isPublished": true,
+  "participants": [],
+  "createdAt": "2025-04-20T12:00:00Z",
+  "updatedAt": "2025-04-20T12:00:00Z"
+}
+```
 
-- **cURL**:
-    ```bash
-    curl -X GET http://localhost:5000/events -H "Content-Type: application/json"
-    ```
-
-### 5. **Update Event**
-- **PUT** `/events/:id`
-- **Headers**:
-    - `Authorization: Bearer <JWT_TOKEN>`
+#### Update Event
+- **URL**: `/events/:id`
+- **Method**: `PUT`
+- **Auth**: Required (Bearer Token, must be creator)
 - **Body**:
-    ```json
-    {
-      "title": "Updated Event",
-      "location": "New Location"
-    }
-    ```
+```json
+{
+  "title": "Updated Tech Conference 2025",
+  "description": "Updated description"
+}
+```
+- **Success Response**: `200 OK`
 
-- **cURL**:
-    ```bash
-    curl -X PUT http://localhost:5000/events/<event_id> -H "Authorization: Bearer <JWT_TOKEN>" -H "Content-Type: application/json" -d '{"title":"Updated Event", "location":"New Location"}'
-    ```
+#### Delete Event
+- **URL**: `/events/:id`
+- **Method**: `DELETE`
+- **Auth**: Required (Bearer Token, must be creator)
+- **Success Response**: `200 OK`
+```json
+{
+  "message": "Event deleted"
+}
+```
 
-### 6. **Delete Event**
-- **DELETE** `/events/:id`
-- **Headers**:
-    - `Authorization: Bearer <JWT_TOKEN>`
+#### Upload Event Banner
+- **URL**: `/events/:id/upload`
+- **Method**: `POST`
+- **Auth**: Required (Bearer Token, must be creator)
+- **Body**: Form-data with key `banner` and file value
+- **File Requirements**: JPEG/PNG, max 2MB
+- **Success Response**: `200 OK`
+```json
+{
+  "message": "Upload successful",
+  "bannerUrl": "/uploads/1619812345678-image.jpg"
+}
+```
 
-- **cURL**:
-    ```bash
-    curl -X DELETE http://localhost:5000/events/<event_id> -H "Authorization: Bearer <JWT_TOKEN>"
-    ```
+## Event Status Lifecycle
 
-## Event Statuses
+Events in the system follow a lifecycle:
 
-- **upcoming**: The event is scheduled but hasn't started yet.
-- **ongoing**: The event is currently happening.
-- **completed**: The event has finished.
-- **cancelled**: The event was cancelled.
+1. **Upcoming**: After creation until the start time
+2. **Ongoing**: Between start time and end time
+3. **Completed**: After end time
+4. **Cancelled**: Manually set by event creator
 
-The system automatically updates the event status based on the event's start and end time. Events will be marked as `ongoing` when the current time falls between the `startTime` and `endTime`, and as `completed` once the `endTime` has passed.
+The system automatically updates these statuses via a cron job that runs every 10 minutes.
+
+## Automated Background Tasks
+
+1. **Event Reminders**:
+   - Runs every minute
+   - Identifies events starting in the next 5 minutes
+   - Logs reminders (can be extended to email/SMS notifications)
+
+2. **Status Updater**:
+   - Runs every 10 minutes
+   - Updates event statuses based on current time
+   - Transitions events from upcoming → ongoing → completed
 
 ## Error Handling
 
 The API uses standard HTTP status codes for error responses:
 
-- **400 Bad Request**: The request was invalid (e.g., missing required fields).
-- **401 Unauthorized**: The user is not authenticated or the JWT token is invalid.
-- **403 Forbidden**: The user doesn't have permission to perform the action.
-- **404 Not Found**: The requested resource doesn't exist.
-- **500 Internal Server Error**: An unexpected error occurred on the server.
+- **400 Bad Request**: Invalid input data
+- **401 Unauthorized**: Missing or invalid authentication
+- **403 Forbidden**: Valid authentication but insufficient permissions
+- **404 Not Found**: Resource not found
+- **500 Internal Server Error**: Server-side errors
 
-### Sample Error Response:
-```json
-{
-  "error": "Invalid token"
-}
+## Testing with cURL
+
+### Register User
+```bash
+curl -X POST https://event-970g.onrender.com/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test User", "email":"test@example.com", "pass":"password123"}'
+```
+
+### Login
+```bash
+curl -X POST https://event-970g.onrender.com/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com", "pass":"password123"}'
+```
+
+### Create Event
+```bash
+curl -X POST https://event-970g.onrender.com/events \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"title":"New Event", "description":"Event description", "location":"Virtual", "startTime":"2025-05-01T10:00:00Z", "endTime":"2025-05-01T12:00:00Z", "maxParticipants":50, "isPublished":true}'
+```
+
+### Get Events
+```bash
+curl -X GET https://event-970g.onrender.com/events
+```
+
+### Upload Banner
+```bash
+curl -X POST https://event-970g.onrender.com/events/EVENT_ID/upload \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "banner=@/path/to/your/image.jpg"
+```
+
+## File Upload Troubleshooting
+
+If you encounter issues with file uploads:
+
+1. Ensure the file is a valid JPEG or PNG
+2. Check that the file size is under 2MB
+3. Use the correct field name (`banner`) in your form-data
+4. Verify your JWT token is valid and included in the Authorization header
+5. Confirm that the `/uploads` directory exists with proper write permissions
+
+
+## Contact
+
+For questions or support, please create an issue in the GitHub repository.
