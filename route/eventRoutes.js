@@ -9,6 +9,8 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const fileFilter = (req, file, cb) => {
+    console.log('File MIME type:', file.mimetype); 
+    console.log('File size:', file.size);
   if (['image/jpeg', 'image/png'].includes(file.mimetype) && file.size <= 2 * 1024 * 1024) {
     cb(null, true);
   } else {

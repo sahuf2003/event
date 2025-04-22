@@ -69,6 +69,9 @@ const uploadBanner = async (req, res) => {
     if (event.createdBy.toString() !== req.user.id) {
         return res.status(403).json({ message: "Not authorized" });
       }  
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
     event.bannerUrl = `/uploads/${req.file.filename}`;
     await event.save();
     res.json({ message: 'Upload successful', bannerUrl: event.bannerUrl });
