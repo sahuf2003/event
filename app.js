@@ -8,6 +8,7 @@ const errorHandler = require('./middleware/errorHandler');
 const cronJobs = require('./utils/cronJobs');
 const app = express();
 
+app.set('trust proxy', true);
 dotenv.config();
 connection();
 
